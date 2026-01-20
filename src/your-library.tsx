@@ -125,7 +125,7 @@ function PlaylistDetail({ playlist, onBack }: { playlist: any; onBack: () => voi
                   title="Back to Playlists"
                   icon={Icon.ArrowLeft}
                   onAction={onBack}
-                  shortcut={{ modifiers: ['shift'], key: 'backspace' }}
+                  shortcut={{ key: 'backspace', modifiers: [] }}
                 />
                 <Action.CopyToClipboard
                   title="Copy Track URI"
