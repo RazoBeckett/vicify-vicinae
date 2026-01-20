@@ -239,11 +239,7 @@ async function refreshAccessToken(refreshToken: string, clientId: string): Promi
  * Get or create Spotify API client instance
  */
 export async function getSpotifyClient(): Promise<SpotifyApi> {
-  console.log('[Vicify] getSpotifyClient called');
-
   const preferences = getPreferenceValues<Preferences>();
-
-  console.log('[Vicify] Client ID present:', !!preferences.clientId);
 
   if (!preferences.clientId) {
     console.error('[Vicify] Missing Client ID!');
@@ -275,8 +271,6 @@ export async function getSpotifyClient(): Promise<SpotifyApi> {
 
     // Check if we have a valid token that's not about to expire
     if (storedToken && storedToken.expires_at && storedToken.expires_at > (now + EXPIRY_BUFFER)) {
-      console.log('[Vicify] Using stored token (valid for', Math.floor((storedToken.expires_at - now) / 60000), 'more minutes)');
-
       // Reuse existing client if available, otherwise create new one
       if (!spotifyClient) {
         spotifyClient = SpotifyApi.withAccessToken(preferences.clientId, storedToken as AccessToken);
@@ -315,21 +309,21 @@ export async function getSpotifyClient(): Promise<SpotifyApi> {
 
     const tokenData = await performOAuthFlow(preferences.clientId);
     await LocalStorage.setItem('spotify_token_data', JSON.stringify(tokenData));
-    
+
     console.log('[Vicify] OAuth complete, creating client');
     spotifyClient = SpotifyApi.withAccessToken(preferences.clientId, tokenData as AccessToken);
-    
+
     await showToast({
       style: Toast.Style.Success,
       title: 'Authenticated!',
       message: 'Successfully connected to Spotify',
     });
-    
+
     return spotifyClient;
   } catch (error) {
     console.error('[Vicify] Failed to initialize Spotify client:', error);
     console.error('[Vicify] Error details:', JSON.stringify(error, null, 2));
-    
+
     await showToast({
       style: Toast.Style.Failure,
       title: 'Failed to initialize Spotify',
