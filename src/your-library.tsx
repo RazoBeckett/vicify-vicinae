@@ -146,9 +146,9 @@ const STORAGE_KEY = 'vicify-library-view-mode';
 function getViewMode(): 'list' | 'grid' {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return (stored === 'grid' || stored === 'list') ? stored : 'list';
+    return (stored === 'grid' || stored === 'list') ? stored : 'grid';
   } catch {
-    return 'list';
+    return 'grid';
   }
 }
 
