@@ -59,4 +59,4 @@ The extension automatically remembers your last selected Spotify Connect device.
 
 ---
 
-Spotify is a trademark of Spotify AB. This project is not affiliated with or endorsed by Spotify.
+[Spotify](https://www.spotify.com/) is a trademark of [Spotify AB](https://www.spotify.com/us/about-us/contact/). This project is not affiliated with or endorsed by Spotify.
