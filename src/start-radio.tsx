@@ -1,7 +1,8 @@
 import { showToast, Toast } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError, formatArtists, requireActiveDevice, safeApiCall } from './utils/spotify';
+import type { Track } from './types/spotify';
 
-export default async function Command() {
+export default async function Command(): Promise<void> {
   try {
     const spotify = await getSpotifyClient();
     const playbackState = await requireActiveDevice(spotify);
@@ -17,10 +18,10 @@ export default async function Command() {
       return;
     }
     
-    const trackId = currentTrack.item.id;
+    const trackItem = currentTrack.item as Track;
+    const trackId = trackItem.id;
     const trackUri = `spotify:track:${trackId}`;
     
-    // Get recommendations based on the current track
     const recommendations = await spotify.recommendations.get({
       seed_tracks: [trackId],
       limit: 50,
@@ -35,12 +36,12 @@ export default async function Command() {
       return;
     }
     
-    // Start playback with the recommendations
     const trackUris = [trackUri, ...recommendations.tracks.map(t => t.uri)];
-    await safeApiCall(() => spotify.player.startResumePlayback(undefined as any, undefined, trackUris));
+    // @ts-expect-error SDK types don't properly handle optional device_id
+    await safeApiCall(() => spotify.player.startResumePlayback(undefined, undefined, trackUris));
     
-    const trackName = currentTrack.item.name;
-    const artistNames = formatArtists((currentTrack.item as any).artists || []);
+    const trackName = trackItem.name;
+    const artistNames = formatArtists(trackItem.artists);
     
     await showToast({
       style: Toast.Style.Success,
