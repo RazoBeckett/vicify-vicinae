@@ -123,28 +123,8 @@ declare namespace Preferences {
 		
 	}
 
-	/** Command: Set Volume to 0% */
-	export type Volume0 = ExtensionPreferences & {
-		
-	}
-
-	/** Command: Set Volume to 25% */
-	export type Volume25 = ExtensionPreferences & {
-		
-	}
-
-	/** Command: Set Volume to 50% */
-	export type Volume50 = ExtensionPreferences & {
-		
-	}
-
-	/** Command: Set Volume to 75% */
-	export type Volume75 = ExtensionPreferences & {
-		
-	}
-
-	/** Command: Set Volume to 100% */
-	export type Volume100 = ExtensionPreferences & {
+	/** Command: Set Volume to */
+	export type VolumeSet = ExtensionPreferences & {
 		
 	}
 
@@ -280,29 +260,10 @@ declare namespace Arguments {
 		
 	}
 
-	/** Command: Set Volume to 0% */
-	export type Volume0 = {
-		
-	}
-
-	/** Command: Set Volume to 25% */
-	export type Volume25 = {
-		
-	}
-
-	/** Command: Set Volume to 50% */
-	export type Volume50 = {
-		
-	}
-
-	/** Command: Set Volume to 75% */
-	export type Volume75 = {
-		
-	}
-
-	/** Command: Set Volume to 100% */
-	export type Volume100 = {
-		
+	/** Command: Set Volume to */
+	export type VolumeSet = {
+		/** 0-100 */
+		"volume"?: string
 	}
 
 	/** Command: Turn Volume Down */

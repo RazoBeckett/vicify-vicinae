@@ -167,39 +167,19 @@
       "mode": "no-view"
     },
     {
-      "name": "volume-0",
-      "title": "Set Volume to 0%",
-      "subtitle": "Mute",
-      "description": "Set volume to 0%",
-      "mode": "no-view"
-    },
-    {
-      "name": "volume-25",
-      "title": "Set Volume to 25%",
-      "subtitle": "Low volume",
-      "description": "Set volume to 25%",
-      "mode": "no-view"
-    },
-    {
-      "name": "volume-50",
-      "title": "Set Volume to 50%",
-      "subtitle": "Medium volume",
-      "description": "Set volume to 50%",
-      "mode": "no-view"
-    },
-    {
-      "name": "volume-75",
-      "title": "Set Volume to 75%",
-      "subtitle": "High volume",
-      "description": "Set volume to 75%",
-      "mode": "no-view"
-    },
-    {
-      "name": "volume-100",
-      "title": "Set Volume to 100%",
-      "subtitle": "Maximum volume",
-      "description": "Set volume to 100%",
-      "mode": "no-view"
+      "name": "volume-set",
+      "title": "Set Volume to",
+      "subtitle": "Set volume level",
+      "description": "Set volume to specific percentage",
+      "mode": "no-view",
+      "arguments": [
+        {
+          "type": "text",
+          "name": "volume",
+          "placeholder": "0-100",
+          "required": true
+        }
+      ]
     },
     {
       "name": "volume-down",
