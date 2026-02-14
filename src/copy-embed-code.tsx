@@ -1,6 +1,14 @@
 import { showToast, Toast, Clipboard } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError } from './utils/spotify';
 
+/**
+ * Sanitize a string for safe use in HTML attributes
+ * Removes any characters that could be used for HTML injection
+ */
+function sanitizeForHtml(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
 export default async function Command() {
   try {
     const spotify = await getSpotifyClient();
@@ -15,7 +23,7 @@ export default async function Command() {
       return;
     }
     
-    const trackId = currentTrack.item.id;
+    const trackId = sanitizeForHtml(currentTrack.item.id);
     const embedCode = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${trackId}" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
     
     await Clipboard.copy(embedCode);
