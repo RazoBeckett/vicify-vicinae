@@ -10,6 +10,7 @@ interface PlaylistTrack {
 function PlaylistDetail({ playlist, onBack }: { playlist: Playlist; onBack: () => void }) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     loadTracks();
@@ -81,10 +82,27 @@ function PlaylistDetail({ playlist, onBack }: { playlist: Playlist; onBack: () =
     }
   }
 
+  const filteredTracks = tracks.filter(track =>
+    track.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    track.artists.some(artist => artist.name.toLowerCase().includes(searchText.toLowerCase()))
+  );
+
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search tracks..." navigationTitle={playlist.name}>
-      <List.Section title={`${playlist.name} - ${tracks.length} tracks`}>
-        {tracks.map((track, index) => (
+    <List 
+      isLoading={isLoading} 
+      searchBarPlaceholder="Search tracks..." 
+      navigationTitle={playlist.name}
+      searchText={searchText}
+      onSearchTextChange={setSearchText}
+    >
+      <List.Section
+        title={
+          searchText
+            ? `${playlist.name} - ${filteredTracks.length} of ${tracks.length} tracks`
+            : `${playlist.name} - ${tracks.length} tracks`
+        }
+      >
+        {filteredTracks.map((track, index) => (
           <List.Item
             key={track.id}
             title={track.name}
@@ -229,7 +247,10 @@ export default function MyPlaylists() {
   }
 
   if (selectedPlaylist) {
-    return <PlaylistDetail playlist={selectedPlaylist} onBack={() => setSelectedPlaylist(null)} />;
+    return <PlaylistDetail playlist={selectedPlaylist} onBack={() => {
+      setSearchText('');
+      setSelectedPlaylist(null);
+    }} />;
   }
 
   const filteredPlaylists = playlists.filter(playlist =>
