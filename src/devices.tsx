@@ -1,15 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { List, ActionPanel, Action, Icon, showToast, Toast } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError, safeApiCall } from './utils/spotify';
 import { saveLastDeviceName, getLastDeviceName } from './utils/config';
 import type { Device } from './types/spotify';
 
+const DEVICE_RETRY_DELAY_MS = 3500;
+
 export default function Devices() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMounted = useRef(true);
+  const retryTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadDevicesAndAutoSelect();
+    return () => {
+      isMounted.current = false;
+      if (retryTimeoutId.current) {
+        clearTimeout(retryTimeoutId.current);
+      }
+    };
   }, []);
 
    async function loadDevicesAndAutoSelect() {
@@ -46,9 +56,10 @@ export default function Devices() {
           message: `${lastDeviceName} not found, retrying...`,
         });
 
-        setTimeout(async () => {
+        retryTimeoutId.current = setTimeout(async () => {
+          if (!isMounted.current) return;
           await loadDevicesAndAutoSelectWithRetry(lastDeviceName);
-        }, 3500);
+        }, DEVICE_RETRY_DELAY_MS);
         return;
       }
 
@@ -61,7 +72,7 @@ export default function Devices() {
       await handleSpotifyError(error, 'Failed to load devices');
       setIsLoading(false);
     }
-  }
+   }
 
    async function loadDevicesAndAutoSelectWithRetry(lastDeviceName: string) {
      try {
