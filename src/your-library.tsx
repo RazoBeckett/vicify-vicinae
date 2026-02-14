@@ -95,7 +95,13 @@ function PlaylistDetail({ playlist, onBack }: { playlist: Playlist; onBack: () =
       searchText={searchText}
       onSearchTextChange={setSearchText}
     >
-      <List.Section title={`${playlist.name} - ${filteredTracks.length} tracks`}>
+      <List.Section
+        title={
+          searchText
+            ? `${playlist.name} - ${filteredTracks.length} of ${tracks.length} tracks`
+            : `${playlist.name} - ${tracks.length} tracks`
+        }
+      >
         {filteredTracks.map((track, index) => (
           <List.Item
             key={track.id}
