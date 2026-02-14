@@ -1,7 +1,8 @@
 import { showToast, Toast, Clipboard } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError } from './utils/spotify';
+import type { Track } from './types/spotify';
 
-export default async function Command() {
+export default async function Command(): Promise<void> {
   try {
     const spotify = await getSpotifyClient();
     const currentTrack = await spotify.player.getCurrentlyPlayingTrack();
@@ -15,7 +16,8 @@ export default async function Command() {
       return;
     }
     
-    const url = (currentTrack.item as any).external_urls?.spotify || '';
+    const trackItem = currentTrack.item as Track;
+    const url = trackItem.external_urls?.spotify || '';
     
     if (!url) {
       await showToast({

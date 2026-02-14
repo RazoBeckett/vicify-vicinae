@@ -1,7 +1,8 @@
 import { showToast, Toast, Clipboard } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError, formatArtists } from './utils/spotify';
+import type { Track } from './types/spotify';
 
-export default async function Command() {
+export default async function Command(): Promise<void> {
   try {
     const spotify = await getSpotifyClient();
     const currentTrack = await spotify.player.getCurrentlyPlayingTrack();
@@ -15,8 +16,9 @@ export default async function Command() {
       return;
     }
     
-    const trackName = currentTrack.item.name;
-    const artistNames = formatArtists((currentTrack.item as any).artists || []);
+    const trackItem = currentTrack.item as Track;
+    const trackName = trackItem.name;
+    const artistNames = formatArtists(trackItem.artists);
     const text = `${artistNames} - ${trackName}`;
     
     await Clipboard.copy(text);
