@@ -1,7 +1,8 @@
 import { showToast, Toast } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError, formatArtists } from './utils/spotify';
+import type { Track } from './types/spotify';
 
-export default async function Command() {
+export default async function Command(): Promise<void> {
   try {
     const spotify = await getSpotifyClient();
     const currentTrack = await spotify.player.getCurrentlyPlayingTrack();
@@ -15,11 +16,12 @@ export default async function Command() {
       return;
     }
     
-    const trackId = currentTrack.item.id;
+    const trackItem = currentTrack.item as Track;
+    const trackId = trackItem.id;
     await spotify.currentUser.tracks.removeSavedTracks([trackId]);
     
-    const trackName = currentTrack.item.name;
-    const artistNames = formatArtists((currentTrack.item as any).artists || []);
+    const trackName = trackItem.name;
+    const artistNames = formatArtists(trackItem.artists);
     
     await showToast({
       style: Toast.Style.Success,
