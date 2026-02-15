@@ -9,7 +9,7 @@ export default async function Command(props: LaunchProps<{ arguments: Arguments 
   const volumeInput = props.arguments.volume;
   const volume = parseInt(volumeInput, 10);
 
-  if (isNaN(volume) || !Number.isFinite(volume)) {
+  if (isNaN(volume)) {
     await showToast({
       style: Toast.Style.Failure,
       title: 'Invalid Input',
