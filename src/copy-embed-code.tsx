@@ -1,8 +1,14 @@
 import { showToast, Toast, Clipboard } from '@vicinae/api';
 import { handleSpotifyError, withCurrentTrack } from './utils/spotify';
 
+const SPOTIFY_ID_REGEX = /^[A-Za-z0-9]{22}$/;
+
 function sanitizeForHtml(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_-]/g, '');
+  const trimmed = value.trim();
+  if (!SPOTIFY_ID_REGEX.test(trimmed)) {
+    throw new Error('Invalid Spotify track ID format');
+  }
+  return trimmed;
 }
 
 export default async function Command(): Promise<void> {
@@ -19,6 +25,14 @@ export default async function Command(): Promise<void> {
       message: 'Paste in your HTML',
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Invalid Spotify track ID format') {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: 'Invalid Track',
+        message: 'Could not generate embed code',
+      });
+      return;
+    }
     await handleSpotifyError(error, 'Failed to copy embed code');
   }
 }
