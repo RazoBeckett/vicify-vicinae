@@ -28,10 +28,10 @@ export default function SearchSpotify() {
 
   async function performSearch(query: string): Promise<void> {
     const sanitizedQuery = sanitizeSearchQuery(query);
-    setSearchText(sanitizedQuery);
     
     if (!sanitizedQuery || sanitizedQuery.length < MIN_SEARCH_QUERY_LENGTH) {
       setSearchResults([]);
+      setSearchText(sanitizedQuery);
       return;
     }
 
@@ -117,6 +117,10 @@ export default function SearchSpotify() {
   }
 
   function getItemIcon(item: SearchResult): string {
+    if (searchType === 'artist') {
+      const artist = item as unknown as { images?: { url: string }[] };
+      return artist.images?.[0]?.url || Icon.Music;
+    }
     const directImages = 'images' in item ? (item as Album | Playlist).images : undefined;
     const albumImages = 'album' in item && item.album && 'images' in item.album ? item.album.images : undefined;
     const images = directImages || albumImages || [];
@@ -126,16 +130,13 @@ export default function SearchSpotify() {
   return (
     <List
       isLoading={isLoading}
-      onSearchTextChange={(text) => {
-        setSearchText(text);
-        performSearch(text);
-      }}
+      onSearchTextChange={performSearch}
       searchBarPlaceholder={`Search ${searchType}s...`}
       searchBarAccessory={
          <List.Dropdown
            tooltip="Search Type"
            onChange={(newValue) => {
-             setSearchType(newValue as any);
+             setSearchType(newValue as SearchType);
              performSearch(searchText);
            }}
         >
