@@ -21,7 +21,11 @@ export interface Image {
  * Spotify Artist
  */
 export interface Artist {
+  id: string;
   name: string;
+  uri: string;
+  images?: Image[];
+  followers?: Followers;
   external_urls?: ExternalUrls;
 }
 
@@ -36,7 +40,9 @@ export interface Followers {
  * Spotify Album
  */
 export interface Album {
+  id: string;
   name: string;
+  uri: string;
   images: Image[];
   release_date?: string;
   total_tracks?: number;

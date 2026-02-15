@@ -1,31 +1,22 @@
 import { showToast, Toast, open } from '@vicinae/api';
-import { getSpotifyClient, handleSpotifyError, formatArtists } from './utils/spotify';
+import { handleSpotifyError, formatArtists, withCurrentTrack } from './utils/spotify';
 
-export default async function Command() {
+export default async function Command(): Promise<void> {
   try {
-    const spotify = await getSpotifyClient();
-    const currentTrack = await spotify.player.getCurrentlyPlayingTrack();
+    const track = await withCurrentTrack(async (t) => {
+      const artistNames = formatArtists(t.artists);
+      const searchQuery = encodeURIComponent(`${artistNames} ${t.name} lyrics`);
+      const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
+      await open(googleSearchUrl);
+      return { name: t.name, artistNames };
+    });
     
-    if (!currentTrack || !currentTrack.item) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: 'No Track Playing',
-        message: 'Please start playing a track first',
-      });
-      return;
-    }
-    
-    const trackName = currentTrack.item.name;
-    const artistNames = formatArtists((currentTrack.item as any).artists || []);
-    const searchQuery = encodeURIComponent(`${artistNames} ${trackName} lyrics`);
-    const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
-    
-    await open(googleSearchUrl);
+    if (!track) return;
     
     await showToast({
       style: Toast.Style.Success,
       title: 'Searching for Lyrics',
-      message: `${trackName} - ${artistNames}`,
+      message: `${track.name} - ${track.artistNames}`,
     });
   } catch (error) {
     await handleSpotifyError(error, 'Failed to search for lyrics');

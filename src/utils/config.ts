@@ -29,18 +29,25 @@ interface VicifyConfig {
 
 /**
  * Ensure config directory exists
+ * @throws Error if directory creation fails
  */
 function ensureConfigDirectory(): void {
-  const configPath = getVicifyConfigPath();
-  const configDir = path.dirname(configPath);
+  try {
+    const configPath = getVicifyConfigPath();
+    const configDir = path.dirname(configPath);
 
-  if (!fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir, { recursive: true });
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
+    }
+  } catch (error) {
+    console.error('[Vicify] Failed to create config directory:', error);
+    throw new Error('Failed to initialize configuration directory');
   }
 }
 
 /**
  * Read Vicify configuration file
+ * Returns empty config if file doesn't exist or is corrupted
  */
 function readConfig(): VicifyConfig {
   const configPath = getVicifyConfigPath();
@@ -60,26 +67,36 @@ function readConfig(): VicifyConfig {
 
 /**
  * Write Vicify configuration file
+ * @throws Error if write operation fails
  */
 function writeConfig(config: VicifyConfig): void {
   ensureConfigDirectory();
   const configPath = getVicifyConfigPath();
 
   try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), { 
+      encoding: 'utf-8', 
+      mode: 0o600 
+    });
     console.log('[Vicify] Config saved to:', configPath);
   } catch (error) {
     console.error('[Vicify] Failed to write config file:', error);
+    throw new Error('Failed to save configuration');
   }
 }
 
 /**
  * Save last used device name
  */
-export function saveLastDeviceName(deviceName: string): void {
-  const config = readConfig();
-  config.lastDeviceName = deviceName;
-  writeConfig(config);
+export function saveLastDeviceName(deviceName: string): boolean {
+  try {
+    const config = readConfig();
+    config.lastDeviceName = deviceName;
+    writeConfig(config);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -93,8 +110,13 @@ export function getLastDeviceName(): string | null {
 /**
  * Clear last used device name
  */
-export function clearLastDeviceName(): void {
-  const config = readConfig();
-  delete config.lastDeviceName;
-  writeConfig(config);
+export function clearLastDeviceName(): boolean {
+  try {
+    const config = readConfig();
+    delete config.lastDeviceName;
+    writeConfig(config);
+    return true;
+  } catch {
+    return false;
+  }
 }

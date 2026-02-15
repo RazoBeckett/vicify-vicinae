@@ -539,3 +539,86 @@ export async function safeApiCall<T>(apiCall: () => Promise<T>): Promise<T | voi
     throw error;
   }
 }
+
+/**
+ * Get the currently playing track, returning null if nothing is playing
+ * @returns The current track or null if no track is playing
+ */
+export async function getCurrentTrack(): Promise<Track | null> {
+  const spotify = await getSpotifyClient();
+  const currentTrack = await spotify.player.getCurrentlyPlayingTrack();
+  if (!currentTrack || !currentTrack.item) {
+    return null;
+  }
+  return currentTrack.item as Track;
+}
+
+/**
+ * Execute an action with the currently playing track
+ * Handles the common pattern of: get track -> check null -> do action
+ * @param action - Callback function that receives the current track
+ * @returns The action result if track exists, null otherwise (toast is shown automatically)
+ */
+export async function withCurrentTrack<T>(
+  action: (track: Track) => Promise<T>
+): Promise<T | null> {
+  const track = await getCurrentTrack();
+  if (!track) {
+    await showToast({
+      style: Toast.Style.Failure,
+      title: 'No Track Playing',
+      message: 'Start playing a track first',
+    });
+    return null;
+  }
+  
+  return action(track);
+}
+
+/**
+ * Play a track by URI on the active device
+ */
+export async function playTrack(uri: string): Promise<void> {
+  const spotify = await getSpotifyClient();
+  const playbackState = await requireActiveDevice(spotify);
+  if (!playbackState) return;
+  // @ts-expect-error SDK types don't properly handle optional device_id
+  await safeApiCall(() => spotify.player.startResumePlayback(undefined, undefined, [uri]));
+}
+
+/**
+ * Pause playback
+ */
+export async function pausePlayback(): Promise<void> {
+  const spotify = await getSpotifyClient();
+  // @ts-expect-error SDK types don't properly handle optional device_id
+  await safeApiCall(() => spotify.player.pausePlayback(undefined));
+}
+
+/**
+ * Resume playback
+ */
+export async function resumePlayback(): Promise<void> {
+  const spotify = await getSpotifyClient();
+  // @ts-expect-error SDK types don't properly handle optional device_id
+  await safeApiCall(() => spotify.player.startResumePlayback(undefined));
+}
+
+/**
+ * Get current playback state (for volume, shuffle, repeat, etc.)
+ */
+export async function getPlaybackState() {
+  const spotify = await getSpotifyClient();
+  return spotify.player.getPlaybackState();
+}
+
+/**
+ * Set volume with active device check
+ * @param volume - Volume level 0-100
+ */
+export async function setVolume(volume: number): Promise<void> {
+  const spotify = await getSpotifyClient();
+  const playbackState = await requireActiveDevice(spotify);
+  if (!playbackState) return;
+  await safeApiCall(() => spotify.player.setPlaybackVolume(volume, undefined));
+}

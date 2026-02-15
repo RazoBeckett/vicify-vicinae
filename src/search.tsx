@@ -1,19 +1,37 @@
 import { useState } from 'react';
 import { List, ActionPanel, Action, Icon, showToast, Toast } from '@vicinae/api';
 import { getSpotifyClient, handleSpotifyError, formatArtists, requireActiveDevice, safeApiCall } from './utils/spotify';
-import type { Track, Artist, Album, Playlist } from './types/spotify';
+import type { Track, Artist, Album, Playlist, PlaylistTracks, Followers } from './types/spotify';
 
 type SearchResult = Track | Artist | Album | Playlist;
+type SearchType = 'track' | 'artist' | 'album' | 'playlist';
+
+const MAX_SEARCH_QUERY_LENGTH = 200;
+const MIN_SEARCH_QUERY_LENGTH = 2;
+
+/**
+ * Sanitize search query by removing potentially dangerous characters
+ * and limiting length
+ */
+function sanitizeSearchQuery(query: string): string {
+  return query
+    .trim()
+    .slice(0, MAX_SEARCH_QUERY_LENGTH)
+    .replace(/[<>\"']/g, '');
+}
 
 export default function SearchSpotify() {
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchType, setSearchType] = useState<'track' | 'artist' | 'album' | 'playlist'>('track');
+  const [searchType, setSearchType] = useState<SearchType>('track');
 
-  async function performSearch(query: string) {
-    if (!query || query.length < 2) {
+  async function performSearch(query: string): Promise<void> {
+    const sanitizedQuery = sanitizeSearchQuery(query);
+    
+    if (!sanitizedQuery || sanitizedQuery.length < MIN_SEARCH_QUERY_LENGTH) {
       setSearchResults([]);
+      setSearchText(sanitizedQuery);
       return;
     }
 
@@ -21,9 +39,9 @@ export default function SearchSpotify() {
       setIsLoading(true);
       const spotify = await getSpotifyClient();
       
-      const results = await spotify.search(query, [searchType]);
+      const results = await spotify.search(sanitizedQuery, [searchType]);
       
-      let items: any[] = [];
+      let items: SearchResult[] = [];
       switch (searchType) {
         case 'track':
           items = results.tracks?.items || [];
@@ -89,36 +107,36 @@ export default function SearchSpotify() {
     }
     if (searchType === 'playlist') {
       const hasTracks = 'tracks' in item && item.tracks !== null;
-      return hasTracks ? `${(item.tracks as any).total} tracks` : '0 tracks';
+      return hasTracks ? `${(item.tracks as PlaylistTracks).total} tracks` : '0 tracks';
     }
     if (searchType === 'artist') {
       const hasFollowers = 'followers' in item;
-      return hasFollowers ? `${(item.followers as any).total} followers` : '';
+      return hasFollowers ? `${(item.followers as Followers).total} followers` : '';
     }
     return '';
   }
 
   function getItemIcon(item: SearchResult): string {
-    // Images can be on the item directly (Album, Playlist, Artist in SDK) or nested (Track)
-    const directImages = 'images' in item ? item.images : undefined;
+    if (searchType === 'artist') {
+      const artist = item as unknown as { images?: { url: string }[] };
+      return artist.images?.[0]?.url || Icon.Music;
+    }
+    const directImages = 'images' in item ? (item as Album | Playlist).images : undefined;
     const albumImages = 'album' in item && item.album && 'images' in item.album ? item.album.images : undefined;
     const images = directImages || albumImages || [];
-    return (images as any)[0]?.url || Icon.Music;
+    return images[0]?.url || Icon.Music;
   }
 
   return (
     <List
       isLoading={isLoading}
-      onSearchTextChange={(text) => {
-        setSearchText(text);
-        performSearch(text);
-      }}
+      onSearchTextChange={performSearch}
       searchBarPlaceholder={`Search ${searchType}s...`}
       searchBarAccessory={
          <List.Dropdown
            tooltip="Search Type"
            onChange={(newValue) => {
-             setSearchType(newValue as any);
+             setSearchType(newValue as SearchType);
              performSearch(searchText);
            }}
         >
@@ -145,9 +163,12 @@ export default function SearchSpotify() {
         />
       )}
 
-      {searchResults.map((item) => (
+      {searchResults.map((item) => {
+        const itemKey = 'id' in item ? item.id : `artist-${item.name}`;
+        const itemUri = 'uri' in item ? item.uri : '';
+        return (
         <List.Item
-          key={item.id}
+          key={itemKey}
           title={getItemTitle(item)}
           subtitle={getItemSubtitle(item)}
           icon={getItemIcon(item)}
@@ -158,12 +179,12 @@ export default function SearchSpotify() {
                   <Action
                     title="Play"
                     icon={Icon.Play}
-                    onAction={() => playTrack(item.uri)}
+                    onAction={() => playTrack(itemUri)}
                   />
                   <Action
                     title="Add to Queue"
                     icon={Icon.Plus}
-                    onAction={() => addToQueue(item.uri, item.name)}
+                    onAction={() => addToQueue(itemUri, item.name)}
                     shortcut={{ modifiers: ['cmd'], key: 'q' }}
                   />
                 </>
@@ -174,13 +195,13 @@ export default function SearchSpotify() {
               />
               <Action.CopyToClipboard
                 title="Copy Spotify URI"
-                content={item.uri}
+                content={itemUri}
                 shortcut={{ modifiers: ['cmd'], key: 'c' }}
               />
             </ActionPanel>
           }
         />
-      ))}
+      )})}
     </List>
   );
 }
